@@ -11,7 +11,7 @@ TITLE Project 6     (Proj6_heidrica.asm)
 ;			   3. The numbers entered, sum of numbers, and rounded average, is converted into charachters and printed wihout using WriteInt or WriteDec
 
 INCLUDE Irvine32.inc
-MAX = 200
+
 
 mGetString MACRO user_prompt, user_input, MAX, byte_count
 	push	edx
@@ -32,21 +32,24 @@ mGetString MACRO user_prompt, user_input, MAX, byte_count
 ENDM
 
 
-; (insert constant definitions here)
+
 
 .data
 ; This is for the Get String MACRO
 user_prompt		byte		"Please enter a signed number: ",0		; prompt for user
 user_input		byte		31 DUP(0)
+max_input		DWORD		sizeof user_input
 byte_count		dword		?
 
-
+; This is for the ReadVal Procedure
+conv_num		SDWORD		?										; holds the value of the converted number
 
 .code
 main PROC
+push	conv_num
 push	offset user_prompt
 push	offset user_input
-push	MAX
+push	max_input
 push	byte_count
 call ReadVal
 
@@ -56,15 +59,29 @@ call ReadVal
 main ENDP
 
 ReadVal PROC
+; 20 user prompt. 16 user_input array. 12 size of input. 8 num of characters in array
 push		ebp
 mov			ebp, esp
 pushad
 
-mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8]
+mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8] 
+mov			ecx, [ebp+8]
+
+
+; LODSB? 
+mov			esi, [ebp+16]
+_thisloop:
+LODSB		; takes whatever value is in ESI and copies it to AL REG then ESI is pointed to the next item. 
+; modify AL then store that value in an array (the accumulator) the final number will be stored into holder.
+call		CrLf
+call		writedec
+loop		_thisloop
+
+; Before working with signs, which will just be a loop I hope; convert into value. create converted array; STOSB LODSB
 
 popad
 pop			ebp
-ret			16	
+ret			20	
 ReadVal ENDP
 
 WriteVal PROC
