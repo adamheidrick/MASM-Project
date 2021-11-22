@@ -12,22 +12,49 @@ TITLE Project 6     (Proj6_heidrica.asm)
 
 INCLUDE Irvine32.inc
 
-; (insert macro definitions here)
+mGetString MACRO user_prompt
+	push	edx
+	mov		edx, user_prompt
+	call	WriteString
+	pop		edx
+ENDM
 
 ; (insert constant definitions here)
 
 .data
 
-; (insert variable definitions here)
+user_prompt		byte		"Please enter a signed number: ",0
+
+
+
+
+
 
 .code
 main PROC
+push	offset user_prompt
+call	ReadVal
 
-; (insert executable instructions here)
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
 
-; (insert additional procedures here)
+ReadVal PROC
+push		ebp
+mov			ebp, esp
+pushad
+
+mGetString [ebp + 8]
+
+
+popad
+pop			ebp
+ret			4
+ReadVal ENDP
+
+WriteVal PROC
+
+ret
+WriteVal ENDP
 
 END main
