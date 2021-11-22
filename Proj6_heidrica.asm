@@ -24,8 +24,7 @@ mGetString MACRO user_prompt, user_input, MAX, byte_count
 	mov ecx,	MAX
 	call		ReadString
 	mov			byte_count, eax
-	call		writeDec
-
+	;call		writeDec
 
 	pop		ecx
 	pop		edx
@@ -42,15 +41,19 @@ max_input		DWORD		sizeof user_input
 byte_count		dword		?
 
 ; This is for the ReadVal Procedure
-conv_num		SDWORD		?										; holds the value of the converted number
+conv_num		SDWORD		0										; holds the value of the converted number
+conv_accum		byte		31 DUP(0)								; array for accumulating conversion
 
 .code
 main PROC
-push	conv_num
-push	offset user_prompt
-push	offset user_input
-push	max_input
-push	byte_count
+
+
+push	offset conv_accum	; +28
+push	conv_num			; +24
+push	offset user_prompt	; +20
+push	offset user_input	; +16
+push	max_input			; +12
+push	byte_count			; +8
 call ReadVal
 
 
@@ -64,28 +67,55 @@ push		ebp
 mov			ebp, esp
 pushad
 
-mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8] 
+mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8] ; MACRO TO GET USER INPUT
+
 mov			ecx, [ebp+8]
-
-
-; LODSB? 
 mov			esi, [ebp+16]
-_thisloop:
-LODSB		; takes whatever value is in ESI and copies it to AL REG then ESI is pointed to the next item. 
-; modify AL then store that value in an array (the accumulator) the final number will be stored into holder.
-call		CrLf
-call		writedec
-loop		_thisloop
 
-; Before working with signs, which will just be a loop I hope; convert into value. create converted array; STOSB LODSB
+; len list is 0 then that is a non input, and an error should be raised. 
+; if len of list is greater than 15 too many inputs: message
+; main validation: it will loop in main, so if maybe some a variable -1 then error and repeat. 
+; PERHAPS FIRST COMPARRISON TO SEE IF POSITIVE OR NEGATIVE, THEN BRANCH
+; to start LODSB ESI by one before sending it to convert if [esi] == + or neg
+_positive:
+; first sybmol == 43 
+; inc esi: then jump
+_negative:
+; first symbol == 45
+; inc esi: then jump
+
+_convertloop:
+LODSB		; takes whatever value is in ESI and copies it to AL REG then ESI is pointed to the next item. 
+
+; compare if in range: if not break
+sub		al, 48
+mov		ebx, [ebp+24]
+push	eax
+mov		eax, 10d
+mul		ebx
+mov		ebx, eax
+pop		eax
+add		ebx, eax
+mov		[ebp+24], ebx
+loop		_convertloop
+
+call		CrLf
+mov			eax, [ebp+24]
+call		writeDec
+;mov	eax, [edi - 1] ; -1 because it zero terminates. 0 will always be the last number
+
 
 popad
 pop			ebp
-ret			20	
+ret			24	
 ReadVal ENDP
 
 WriteVal PROC
+; convert a numeric SDWORD value to a string of ascii digits
+; invoke the mDisplayString macro to print the ascii representation of the SDWORD value to the output
+; if negative <0, multiply by -1 and move char "-" into edi then inc edi.Then . . 
 
+; take dword down to 0 (diby dividing by 10) with remainer in edx constantly pushing to stack, once eax 0, pop & mul10 + ascii (47?) to al and STOSB to array. 
 
 
 ret
