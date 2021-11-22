@@ -11,29 +11,45 @@ TITLE Project 6     (Proj6_heidrica.asm)
 ;			   3. The numbers entered, sum of numbers, and rounded average, is converted into charachters and printed wihout using WriteInt or WriteDec
 
 INCLUDE Irvine32.inc
+MAX = 200
 
-mGetString MACRO user_prompt
+mGetString MACRO user_prompt, user_input, MAX, byte_count
 	push	edx
+	push	ecx
+	
 	mov		edx, user_prompt
 	call	WriteString
+	
+	mov edx,	user_input
+	mov ecx,	MAX
+	call		ReadString
+	mov			byte_count, eax
+	call		writeDec
+
+
+	pop		ecx
 	pop		edx
 ENDM
+
 
 ; (insert constant definitions here)
 
 .data
-
-user_prompt		byte		"Please enter a signed number: ",0
-
-
-
+; This is for the Get String MACRO
+user_prompt		byte		"Please enter a signed number: ",0		; prompt for user
+user_input		byte		31 DUP(0)
+byte_count		dword		?
 
 
 
 .code
 main PROC
 push	offset user_prompt
-call	ReadVal
+push	offset user_input
+push	MAX
+push	byte_count
+call ReadVal
+
 
 
 	Invoke ExitProcess,0	; exit to operating system
@@ -44,15 +60,16 @@ push		ebp
 mov			ebp, esp
 pushad
 
-mGetString [ebp + 8]
-
+mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8]
 
 popad
 pop			ebp
-ret			4
+ret			16	
 ReadVal ENDP
 
 WriteVal PROC
+
+
 
 ret
 WriteVal ENDP
