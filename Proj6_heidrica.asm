@@ -20,17 +20,25 @@ mGetString MACRO user_prompt, user_input, MAX, byte_count
 	mov		edx, user_prompt
 	call	WriteString
 	
-	mov edx,	user_input
-	mov ecx,	MAX
-	call		ReadString
-	mov			byte_count, eax
-	;call		writeDec
+	mov		edx, user_input
+	mov		ecx, MAX
+	call	ReadString
+	mov		byte_count, eax
 
 	pop		ecx
 	pop		edx
 ENDM
 
+mDisplayString MACRO converted_num
 
+	push	edx
+	
+	mov		edx, converted_num
+	call	WriteString
+
+	pop		edx	
+
+ENDM
 
 
 .data
@@ -43,7 +51,11 @@ byte_count		dword		?
 ; This is for the ReadVal Procedure
 stored_num		SDWORD		?										; stores the value after conversion								
 conv_num		SDWORD		0										; holds the value while converting
-val_error		DWORD		0										; this is for indicating an error within ReadVal valuation
+val_error		DWORD		0										; this is for indicating an error within ReadVal evaluation, is 1 if error 0 if no error
+
+; This is for Writeval Procedure
+conv_string		byte		31 DUP(0)								; string to be read
+
 
 
 .code
@@ -60,8 +72,14 @@ call	CrLf
 
 mov		eax, stored_num
 call	writeInt
-mov		eax, val_error
-call	writeInt
+call	crlf
+;mov		eax, val_error
+;call	writeInt
+
+
+push	stored_num
+push	offset conv_string
+call	WriteVal
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -143,16 +161,16 @@ _convertloop:
 _done:
 	mov			eax, [ebp+24]
 	mov			[edi], eax
-	JO			_error
+	JO			_error				; Work on this later
 	jmp			_exit
 
 _error:
+; if error, then variable stored for errors set to one. Used in main for iteration.
 	mov			edi, [ebp+28]
 	mov			eax, 1
 	mov			[edi], eax
 
 _exit:
-
 
 popad
 pop			ebp
@@ -160,14 +178,40 @@ ret			28
 ReadVal ENDP
 
 WriteVal PROC
-; convert a numeric SDWORD value to a string of ascii digits
-; invoke the mDisplayString macro to print the ascii representation of the SDWORD value to the output
-; if negative <0, multiply by -1 and move char "-" into edi then inc edi.Then . . 
+push		ebp
+mov			ebp, esp
+pushad
+
+mov			edi, [ebp+8]
+
+mov			eax, [ebp+12]
+cmp			eax, 0
+jl			_negsym
+jmp			_convert
+
+_negsym: 
+mov			eax, 45d
+mov			[edi],eax
+add			edi, 1
+
+_convert:
+
+
+
+
+
+
+
+
+
+mDisplayString [ebp+8]
+
 
 ; take dword down to 0 (diby dividing by 10) with remainer in edx constantly pushing to stack, once eax 0, pop & mul10 + ascii (47?) to al and STOSB to array. 
 
-
-ret
+popad
+pop			ebp
+ret 8
 WriteVal ENDP
 
 END main
