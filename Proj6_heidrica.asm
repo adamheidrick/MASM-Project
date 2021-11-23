@@ -29,10 +29,10 @@ mGetString MACRO user_prompt, user_input, MAX, byte_count
 	pop		edx
 ENDM
 
-mDisplayString MACRO converted_num
+mDisplayString MACRO converted_string
 
 	push	edx
-	mov		edx, converted_num
+	mov		edx, converted_string
 	call	WriteString
 	pop		edx	
 
@@ -79,18 +79,26 @@ val_error		DWORD		0										; this is for indicating an error within ReadVal ev
 
 ; This is for Writeval Procedure
 conv_string		byte		31 DUP(0)								; string to be read
+clear_array		byte		31 DUP(0)								; used to clear an array
 
-; This is for main
+; This is text for main
 user_error		byte		"Error: you did not enter a signed number or your number was too big.",13,10,0
+total_message	byte		"You entered the following numbers: ",13,10,0
+sum_message		byte		"The sum of these numbers is: ", 0
+average_mes		byte		"The rounded average is: ",0
+
+
 running_sum		SDWORD		0										; used to store running sum
-nums_collected	byte		31 DUP(0)								; collected users entered number into array
+nums_collected	DWORD		10 DUP(0)								; collected users entered number into array
+average			SDWORD		? 
 
 .code
 main PROC
-
+_intro: 
 	mDisplayString offset author
 	mDisplayString offset intro
 
+_collection:
 	mov		ecx, 10				; counting 10 user inputs
 	mov		edi, offset nums_collected
 
@@ -99,12 +107,18 @@ _collectLoop:
 	call	ReadVal
 	cmp		val_error, 1
 	je		_error
-	
-	call	CrLf
-	mov		eax, stored_num
-	stosb	
+	; how to get this stored num value into an array? 
+	call crlf
+	call crlf
+	mCallingWrite stored_num
+	call	WriteVal
+	;mov		eax, stored_num
+	;call	writeint
+	call crlf
+	call crlf
+	; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	loop	_collectLoop
-	jmp		_next
+	jmp		_Write
 	
 	_error:
 	inc		ecx
@@ -113,17 +127,17 @@ _collectLoop:
 	mov		val_error, 0
 	loop	_collectLoop
 
-	_next:
+_Write:
+	; THIS IS WHERE THE LOOP TO WRITE USERS ENTERED NUMBERS INSTEAD OF  WRITEDEC use WRITEVAL and move each value in ESI to STORED NUM.
+	mCallingWrite stored_num
+	call	WriteVal
+	
 
-	mov	esi, offset nums_collected
-	mov ecx, 9
-	_larp:
-	lodsb
-	call writedec
-	loop _larp
+_sum:
 
-mCallingWrite
-call	WriteVal
+_average:
+
+_goodbye:
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -265,6 +279,8 @@ cmp			eax,0
 je			_stringit
 jmp			_separateLoop
 
+
+
 _stringit:
 pop			eax
 add			eax, 48d
@@ -272,6 +288,18 @@ stosb
 loop		_stringit
 
 mDisplayString [ebp+8]
+
+; need to clear the array somehow because it is keeping larger values when writing. 
+mov			ecx, 32
+mov			edi, [ebp+8]
+_clearit:
+mov			eax, 0
+stosb
+cld
+loop	_clearit
+std
+
+
 
 
 ; take dword down to 0 (diby dividing by 10) with remainer in edx constantly pushing to stack, once eax 0, pop & mul10 + ascii (47?) to al and STOSB to array. 
