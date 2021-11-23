@@ -42,6 +42,16 @@ ENDM
 
 
 .data
+; This is for the intro
+author			byte		"Project 6: Portfolio Project : Low-Level I/O procedures",13,10,
+							"Written by: Adam Heidrick (heidrica@oregonestate.edu)",13,10,13,10,0
+
+intro			byte		"Please proved 10 signed decimal integers",13,10,
+							"Each number needs to be small enough to fit inside a 32 bit register.",13,10,
+							"After you have finished inputting the numbers, I will display a list of integers, their sum, and their average.",13,10,13,10,0
+							
+
+
 ; This is for the Get String MACRO
 user_prompt		byte		"Please enter a signed number: ",0		; prompt for user
 user_input		byte		31 DUP(0)
@@ -56,10 +66,15 @@ val_error		DWORD		0										; this is for indicating an error within ReadVal ev
 ; This is for Writeval Procedure
 conv_string		byte		31 DUP(0)								; string to be read
 
-
+; This is for main
+user_error		byte		"Error: you did not enter a signed number or your number was too big.",13,10,0
 
 .code
 main PROC
+
+mDisplayString offset author
+mDisplayString offset intro
+
 push	offset stored_num	; +32
 push	offset val_error	; +28
 push	conv_num			; +24
@@ -70,19 +85,14 @@ push	byte_count			; +8
 call	ReadVal
 call	CrLf
 
-mov		eax, stored_num
-call	writeInt
-call	crlf
-;mov		eax, val_error
-;call	writeInt
-
-
 push	stored_num
 push	offset conv_string
 call	WriteVal
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
+
+
 
 ReadVal PROC
 	push		ebp
