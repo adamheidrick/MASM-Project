@@ -74,7 +74,7 @@ byte_count		dword		?
 
 ; This is for the ReadVal Procedure
 stored_num		SDWORD		?										; stores the value after conversion								
-conv_num		SDWORD		0										; holds the value while converting
+conv_num		SDWORD		0										; holds the value while converting (an empty accumulator). 
 val_error		DWORD		0										; this is for indicating an error within ReadVal evaluation, is 1 if error 0 if no error
 
 ; This is for Writeval Procedure
@@ -83,12 +83,13 @@ clear_array		byte		31 DUP(0)								; used to clear an array
 
 ; This is text for main
 user_error		byte		"Error: you did not enter a signed number or your number was too big.",13,10,0
-total_message	byte		"You entered the following numbers: ",13,10,0
-sum_message		byte		"The sum of these numbers is: ", 0
-average_mes		byte		"The rounded average is: ",0
+total_message	byte		13,10,"You entered the following numbers: ",13,10,0
+sum_message		byte		13,10,"The sum of these numbers is: ", 0
+average_mes		byte		13,10,"The rounded average is: ",0
+spacer			byte		", ",0
 
-
-running_sum		SDWORD		0										; used to store running sum
+; This is data stored for main
+running_sum		SDWORD		?										; used to store running sum
 nums_collected	SDWORD		10 DUP(0)								; collected users entered number into array
 average			SDWORD		? 
 
@@ -108,13 +109,14 @@ _collectLoop:
 	cmp		val_error, 1
 	je		_error
 
-	mov		eax, stored_num 
+	mov		eax, stored_num
+	; collect sum here, just add stored_num to some register
 	stosd
-
 	loop	_collectLoop
+	
 	jmp		_Write
 	
-	_error:
+_error:
 	inc		ecx
 	mov		edx, offset user_error
 	call	writestring
@@ -122,29 +124,31 @@ _collectLoop:
 	loop	_collectLoop
 
 _Write:
-	; THIS IS WHERE THE LOOP TO WRITE USERS ENTERED NUMBERS INSTEAD OF  WRITEDEC use WRITEVAL and move each value in ESI to STORED NUM.
+	mDisplayString offset total_message
+	mov		esi, offset nums_collected
+	mov		ecx, 10
 	
-	mov esi, offset nums_collected
-	mov ecx, 10
-	_looper:
+_Writeloop:
 	lodsd
-	mov	stored_num, eax
+	mov		stored_num, eax
 	
-	call	crlf
 	mCallingWrite stored_num
 	call	WriteVal
 	
-	call	crlf
+	mDisplayString offset spacer
+	loop	_Writeloop
 	
-	loop	_looper
-	
-
-
 _sum:
+
+; just take the sum and writeVal
 
 _average:
 
+; take the average, div by 10, take eax and send it to write val
+
 _goodbye:
+
+; some array that says goodbye
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -158,19 +162,18 @@ ReadVal PROC
 
 	mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8] ; MACRO TO GET USER INPUT
 
-
 	mov			ecx, [ebp+8]
 	mov			esi, [ebp+16]
 	mov			edi, [ebp+32]
 	mov			ecx, [ebp+8]						; Prep for loop
 
-; These are preliminary checks: it checks if user just hinted enter with no value or too many characters. 
+; These are preliminary checks: it checks if user just hit enter with no value or too many characters. 
 
 	mov			eax, [ebp+8]
 	cmp			eax, 0
 	jz			_error								; if does not enter value and just hits enter
 	cmp			eax, 15
-	ja			_error								; if user enters more than 10 characters, this is just a pre check. An overflow check is also in place in the conversion loop
+	ja			_error								; if user enters more than 15 characters, this is just a pre check. An overflow check is also in place in the conversion loop
 
 ; These next two checks check for the first value of the array for sign. 
 
@@ -192,7 +195,6 @@ _negative:
 	mov			edx, 1				; register used to determine if the value at the end needs to be negative
 
 _convertloop:
-
 	LODSB		; takes whatever value is in ESI and copies it to AL REG then ESI is pointed to the next item. 
 	
 	cmp			al, 48
@@ -228,7 +230,7 @@ _convertloop:
 _done:
 	mov			eax, [ebp+24]
 	mov			[edi], eax
-	JO			_error				; Work on this later
+	JO			_error				
 	jmp			_exit
 
 _error:
@@ -238,82 +240,76 @@ _error:
 	mov			[edi], eax
 
 _exit:
-
-popad
-pop			ebp
-ret			28	
+	popad
+	pop			ebp
+	ret			28
+	
 ReadVal ENDP
 
 WriteVal PROC
-push		ebp
-mov			ebp, esp
-pushad
+	push		ebp
+	mov			ebp, esp
+	pushad
 
-mov			edi, [ebp+8]
+	mov			edi, [ebp+8]	
+	mov			eax, [ebp+12]
+	cmp			eax, 0
 
-mov			eax, [ebp+12]
-cmp			eax, 0
-jl			_negsym			; if number is negative, add negative symbol
-je			_zero			; if number is just a zero
-jmp			_separate
+	jl			_negsym			; if number is negative, add negative symbol
+	je			_zero			; if number is just a zero
+	jmp			_separate
 
 _negsym:
-neg			eax				; turns into positive for ease of handling
-push		eax
-mov			eax, 45d		; puts the negative symbol at first index. 
-mov			[edi],eax
-add			edi, 1
-pop			eax
-jmp			_separate
+	neg			eax				; turns into positive for ease of handling
+	push		eax
+	mov			eax, 45d		; puts the negative symbol at first index. 
+	mov			[edi],eax		; increases edi to be used in separateLoop string primitive
+	add			edi, 1
+	pop			eax
+	jmp			_separate
 
 _zero:
-push		eax
-mov			eax, 48d
-mov			[edi], eax
-pop			eax
-
+	push		eax
+	mov			eax, 48d
+	mov			[edi], eax
+	pop			eax
 
 _separate:
-mov			ebx,10
-mov			ecx, 0			; counter for stringit loop
+	mov			ebx,10
+	mov			ecx, 0			; counter for stringit loop
 
+; Method is to separate each number by dividing by ten, which puts the value into edx. Then pushing edx to the stack for easy retreival when converting.
 _separateLoop:
-inc			ecx
-mov			edx,0
-div			ebx
-push		edx
-cmp			eax,0
-je			_stringit
-jmp			_separateLoop
-
-
+	inc			ecx
+	mov			edx,0
+	div			ebx
+	push		edx
+	cmp			eax,0
+	
+	je			_stringit
+	jmp			_separateLoop
 
 _stringit:
-pop			eax
-add			eax, 48d
-stosb
-loop		_stringit
+	pop			eax				; this pops the edx values pushed above into eax for conversion and storing into array . . . pretty cool. 
+	add			eax, 48d
+	stosb
+	loop		_stringit
 
 mDisplayString [ebp+8]
 
-; need to clear the array somehow because it is keeping larger values when writing. 
-mov			ecx, 32
-mov			edi, [ebp+8]
+; This is used to clear the array. Without it clear, calling write string will print number that were not overwritten by smaller numbers 
+	mov			ecx, 32
+	mov			edi, [ebp+8]
 _clearit:
-mov			eax, 0
-stosb
-cld
-loop	_clearit
-std
+	mov			eax, 0
+	stosb
+	cld
+	loop	_clearit
+	std
 
-
-
-
-; take dword down to 0 (diby dividing by 10) with remainer in edx constantly pushing to stack, once eax 0, pop & mul10 + ascii (47?) to al and STOSB to array. 
-
-popad
-pop			ebp
-ret 8
+	popad
+	pop			ebp
+	ret 8
 WriteVal ENDP
 
 END main
