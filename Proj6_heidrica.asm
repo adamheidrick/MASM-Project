@@ -32,25 +32,39 @@ ENDM
 mDisplayString MACRO converted_num
 
 	push	edx
-	
 	mov		edx, converted_num
 	call	WriteString
-
 	pop		edx	
 
 ENDM
 
+mCallingRead MACRO 
+
+	push	offset stored_num	
+	push	offset val_error	
+	push	conv_num			
+	push	offset user_prompt	
+	push	offset user_input	
+	push	max_input			
+	push	byte_count
+
+ENDM
+
+mCallingWrite MACRO 
+
+	push	stored_num
+	push	offset conv_string
+
+ENDM
 
 .data
 ; This is for the intro
 author			byte		"Project 6: Portfolio Project : Low-Level I/O procedures",13,10,
 							"Written by: Adam Heidrick (heidrica@oregonestate.edu)",13,10,13,10,0
 
-intro			byte		"Please proved 10 signed decimal integers",13,10,
+intro			byte		"Please proved 10 signed decimal integers.",13,10,
 							"Each number needs to be small enough to fit inside a 32 bit register.",13,10,
 							"After you have finished inputting the numbers, I will display a list of integers, their sum, and their average.",13,10,13,10,0
-							
-
 
 ; This is for the Get String MACRO
 user_prompt		byte		"Please enter a signed number: ",0		; prompt for user
@@ -68,25 +82,47 @@ conv_string		byte		31 DUP(0)								; string to be read
 
 ; This is for main
 user_error		byte		"Error: you did not enter a signed number or your number was too big.",13,10,0
+running_sum		SDWORD		0										; used to store running sum
+nums_collected	byte		31 DUP(0)								; collected users entered number into array
 
 .code
 main PROC
 
-mDisplayString offset author
-mDisplayString offset intro
+	mDisplayString offset author
+	mDisplayString offset intro
 
-push	offset stored_num	; +32
-push	offset val_error	; +28
-push	conv_num			; +24
-push	offset user_prompt	; +20
-push	offset user_input	; +16
-push	max_input			; +12
-push	byte_count			; +8
-call	ReadVal
-call	CrLf
+	mov		ecx, 10				; counting 10 user inputs
+	mov		edi, offset nums_collected
 
-push	stored_num
-push	offset conv_string
+_collectLoop:
+	mCallingRead			
+	call	ReadVal
+	cmp		val_error, 1
+	je		_error
+	
+	call	CrLf
+	mov		eax, stored_num
+	stosb	
+	loop	_collectLoop
+	jmp		_next
+	
+	_error:
+	inc		ecx
+	mov		edx, offset user_error
+	call	writestring
+	mov		val_error, 0
+	loop	_collectLoop
+
+	_next:
+
+	mov	esi, offset nums_collected
+	mov ecx, 9
+	_larp:
+	lodsb
+	call writedec
+	loop _larp
+
+mCallingWrite
 call	WriteVal
 
 	Invoke ExitProcess,0	; exit to operating system
