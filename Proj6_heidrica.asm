@@ -89,7 +89,7 @@ average_mes		byte		"The rounded average is: ",0
 
 
 running_sum		SDWORD		0										; used to store running sum
-nums_collected	DWORD		10 DUP(0)								; collected users entered number into array
+nums_collected	SDWORD		10 DUP(0)								; collected users entered number into array
 average			SDWORD		? 
 
 .code
@@ -107,16 +107,10 @@ _collectLoop:
 	call	ReadVal
 	cmp		val_error, 1
 	je		_error
-	; how to get this stored num value into an array? 
-	call crlf
-	call crlf
-	mCallingWrite stored_num
-	call	WriteVal
-	;mov		eax, stored_num
-	;call	writeint
-	call crlf
-	call crlf
-	; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+	mov		eax, stored_num 
+	stosd
+
 	loop	_collectLoop
 	jmp		_Write
 	
@@ -129,9 +123,22 @@ _collectLoop:
 
 _Write:
 	; THIS IS WHERE THE LOOP TO WRITE USERS ENTERED NUMBERS INSTEAD OF  WRITEDEC use WRITEVAL and move each value in ESI to STORED NUM.
+	
+	mov esi, offset nums_collected
+	mov ecx, 10
+	_looper:
+	lodsd
+	mov	stored_num, eax
+	
+	call	crlf
 	mCallingWrite stored_num
 	call	WriteVal
 	
+	call	crlf
+	
+	loop	_looper
+	
+
 
 _sum:
 
