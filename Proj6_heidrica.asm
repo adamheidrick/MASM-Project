@@ -43,11 +43,13 @@ byte_count		dword		?
 ; This is for the ReadVal Procedure
 conv_num		SDWORD		0										; holds the value of the converted number
 conv_accum		byte		31 DUP(0)								; array for accumulating conversion
+val_error		DWORD		0										; this is for indicating an error within ReadVal valuation
+
 
 .code
 main PROC
-
-
+	
+push	val_error			; +32
 push	offset conv_accum	; +28
 push	conv_num			; +24
 push	offset user_prompt	; +20
@@ -71,43 +73,82 @@ mGetString [ebp+20], [ebp+16], [ebp+12], [ebp+8] ; MACRO TO GET USER INPUT
 
 mov			ecx, [ebp+8]
 mov			esi, [ebp+16]
+mov			ecx, [ebp+8]						; Prep for loop
 
-; len list is 0 then that is a non input, and an error should be raised. 
-; if len of list is greater than 15 too many inputs: message
-; main validation: it will loop in main, so if maybe some a variable -1 then error and repeat. 
-; PERHAPS FIRST COMPARRISON TO SEE IF POSITIVE OR NEGATIVE, THEN BRANCH
-; to start LODSB ESI by one before sending it to convert if [esi] == + or neg
+; These are preliminary checks: it checks if user just hinted enter with no value or too many characters. 
+
+mov			eax, [ebp+8]
+cmp			eax, 0
+jz			_error								; if does not enter value and just hits enter
+cmp			eax, 15
+ja			_error								; if user enters more than 10 characters, this is just a pre check. An overflow check is also in place in the conversion loop
+
+; These next two checks check for the first value of the array for sign. 
+
+mov			al, [esi]
+cmp			al, 43
+je			_positive
+cmp			al, 45
+je			_negative
+jmp			_convertloop
+
 _positive:
-; first sybmol == 43 
-; inc esi: then jump
+inc			esi
+dec			ecx
+jmp			_convertloop
+
 _negative:
-; first symbol == 45
-; inc esi: then jump
+inc			esi
+dec			ecx
+mov			edx, 1				; register used to determine if the value at the end needs to be negative
 
 _convertloop:
+
 LODSB		; takes whatever value is in ESI and copies it to AL REG then ESI is pointed to the next item. 
 
-; compare if in range: if not break
-sub		al, 48
-mov		ebx, [ebp+24]
-push	eax
-mov		eax, 10d
-mul		ebx
-mov		ebx, eax
-pop		eax
-add		ebx, eax
-mov		[ebp+24], ebx
+cmp			al, 48
+jl			_error
+cmp			al, 57
+jg			_error 
+
+; conversion starts here
+sub			al, 48
+mov			ebx, [ebp+24]
+push		eax
+mov			eax, 10d
+push		edx						; preserves the register that I am using to determine if the value needs to be negative
+mul			ebx
+pop			edx
+mov			ebx, eax
+pop			eax
+add			ebx, eax
+JO			_error					; -2147483648 -> 2147483647 for SDWORD. IF this overflows, then error is raised. 
+
+; accumulates in conv_accum ebp+24
+mov			[ebp+24], ebx
 loop		_convertloop
 
-call		CrLf
+cmp			edx, 1
+jne			_done
 mov			eax, [ebp+24]
-call		writeDec
-;mov	eax, [edi - 1] ; -1 because it zero terminates. 0 will always be the last number
+neg			eax
+JO			_error
+mov			[ebp+24], eax
+jmp			_done
 
+
+_done:
+
+mov			eax, [ebp+24]
+call		writeInt
+
+_error:
+mov			eax, 1
+mov			[ebp+32], eax
 
 popad
 pop			ebp
-ret			24	
+ret			28	
 ReadVal ENDP
 
 WriteVal PROC
