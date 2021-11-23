@@ -186,23 +186,44 @@ mov			edi, [ebp+8]
 
 mov			eax, [ebp+12]
 cmp			eax, 0
-jl			_negsym
-jmp			_convert
+jl			_negsym			; if number is negative, add negative symbol
+je			_zero			; if number is just a zero
+jmp			_separate
 
-_negsym: 
-mov			eax, 45d
+_negsym:
+neg			eax				; turns into positive for ease of handling
+push		eax
+mov			eax, 45d		; puts the negative symbol at first index. 
 mov			[edi],eax
 add			edi, 1
+pop			eax
+jmp			_separate
 
-_convert:
+_zero:
+push		eax
+mov			eax, 48d
+mov			[edi], eax
+pop			eax
 
 
+_separate:
+mov			ebx,10
+mov			ecx, 0			; counter for stringit loop
 
+_separateLoop:
+inc			ecx
+mov			edx,0
+div			ebx
+push		edx
+cmp			eax,0
+je			_stringit
+jmp			_separateLoop
 
-
-
-
-
+_stringit:
+pop			eax
+add			eax, 48d
+stosb
+loop		_stringit
 
 mDisplayString [ebp+8]
 
