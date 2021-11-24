@@ -50,24 +50,24 @@ mCallingRead MACRO
 
 ENDM
 
-mCallingWrite MACRO 
+mCallingWrite MACRO num_to_write 
 
-	push	stored_num
+	push	num_to_write
 	push	offset conv_string
 
 ENDM
 
 .data
 ; This is for the intro
-author			byte		"Project 6: Portfolio Project : Low-Level I/O procedures",13,10,
-							"Written by: Adam Heidrick (heidrica@oregonestate.edu)",13,10,13,10,0
+author			byte		13,10," Project 6: Portfolio Project : Low-Level I/O procedures",13,10,
+							" Written by: Adam Heidrick (heidrica@oregonestate.edu)",13,10,13,10,0
 
-intro			byte		"Please proved 10 signed decimal integers.",13,10,
-							"Each number needs to be small enough to fit inside a 32 bit register.",13,10,
-							"After you have finished inputting the numbers, I will display a list of integers, their sum, and their average.",13,10,13,10,0
+intro			byte		" Please proved 10 signed decimal integers.",13,10,
+							" Each number needs to be small enough to fit inside a 32 bit register.",13,10,
+							" After you have finished inputting the numbers, I will display a list of integers, their sum, and their average.",13,10,13,10,0
 
 ; This is for the Get String MACRO
-user_prompt		byte		"Please enter a signed number: ",0		; prompt for user
+user_prompt		byte		" Please enter a signed number: ",0		; prompt for user
 user_input		byte		31 DUP(0)
 max_input		DWORD		sizeof user_input
 byte_count		dword		?
@@ -82,16 +82,18 @@ conv_string		byte		31 DUP(0)								; string to be read
 clear_array		byte		31 DUP(0)								; used to clear an array
 
 ; This is text for main
-user_error		byte		"Error: you did not enter a signed number or your number was too big.",13,10,0
-total_message	byte		13,10,"You entered the following numbers: ",13,10,0
-sum_message		byte		13,10,"The sum of these numbers is: ", 0
-average_mes		byte		13,10,"The rounded average is: ",0
+user_error		byte		" Error: you did not enter a signed number or your number was too big.",13,10,0
+total_message	byte		13,10," You entered the following numbers: ",13,10,0
+sum_message		byte		13,10,13,10," The sum of these numbers is: ", 0
+average_mes		byte		13,10," The rounded average is: ",0
 spacer			byte		", ",0
 
 ; This is data stored for main
-running_sum		SDWORD		?										; used to store running sum
+running_sum		SDWORD		0										; used to store running sum
 nums_collected	SDWORD		10 DUP(0)								; collected users entered number into array
-average			SDWORD		? 
+
+; This is the farewell text
+farewell		byte		13,10,13,10," Thankyou for using the program. Farewell.",13,10,13,10,0
 
 .code
 main PROC
@@ -110,7 +112,7 @@ _collectLoop:
 	je		_error
 
 	mov		eax, stored_num
-	; collect sum here, just add stored_num to some register
+	add	    running_sum, eax
 	stosd
 	loop	_collectLoop
 	
@@ -139,16 +141,25 @@ _Writeloop:
 	loop	_Writeloop
 	
 _sum:
-
-; just take the sum and writeVal
+	
+	mDisplayString offset sum_message
+	mCallingWrite	running_sum
+	call	WriteVal
+	call	crLf
 
 _average:
 
-; take the average, div by 10, take eax and send it to write val
+	mDisplayString offset average_mes
+	mov		eax, running_sum
+	cdq
+	mov		ebx, 10
+	idiv	ebx
+	mCallingWrite	eax
+	call	WriteVal
 
 _goodbye:
 
-; some array that says goodbye
+	mDisplayString offset farewell
 
 	Invoke ExitProcess,0	; exit to operating system
 main ENDP
@@ -298,7 +309,7 @@ _stringit:
 mDisplayString [ebp+8]
 
 ; This is used to clear the array. Without it clear, calling write string will print number that were not overwritten by smaller numbers 
-	mov			ecx, 32
+	mov			ecx, 31
 	mov			edi, [ebp+8]
 _clearit:
 	mov			eax, 0
