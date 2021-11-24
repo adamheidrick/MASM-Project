@@ -59,12 +59,16 @@ ENDM
 
 .data
 ; This is for the intro
-author			byte		13,10," Project 6: Portfolio Project : Low-Level I/O procedures",13,10,
-							" Written by: Adam Heidrick (heidrica@oregonestate.edu)",13,10,13,10,0
+author			byte		13,10," ++++ Project 6: Portfolio Project : Low-Level I/O procedures ++++",13,10,
+							" ----- Written by: Adam Heidrick (heidrica@oregonestate.edu) -----",13,10,13,10,0
 
-intro			byte		" Please proved 10 signed decimal integers.",13,10,
-							" Each number needs to be small enough to fit inside a 32 bit register.",13,10,
-							" After you have finished inputting the numbers, I will display a list of integers, their sum, and their average.",13,10,13,10,0
+intro			byte		" -----------------------ISTRUCTIONS-------------------------------",13,10,
+							" Please enter 10 signed decimal integers.",13,10,
+							" Each number needs to fit inside a 32 bit register.",13,10,
+							" I will display your entered integers, sum, and average.",13,10,
+							" So what? Not impressed?",13,10,
+							" This program does not use Irvine32's ReadInt or WriteInt.",13,10,
+							" -----------------------------------------------------------------",13,10,13,10,0
 
 ; This is for the Get String MACRO
 user_prompt		byte		" Please enter a signed number: ",0		; prompt for user
