@@ -8,9 +8,9 @@ TITLE Project 6     (Proj6_heidrica.asm)
 ; Description: This program uses low-level I/O procedures, string primatives, and implements macros to accomplish the following:
 ;              1. Uses two modular procedures:  
 ;			      a. ReadVal: receive a user's input as a string and converts it into numeric (SDWORD) form without ReadInt or ReadDec
-;				  b. WriteVal: converts the user's coverted SDWORD and converts it back into a string without WriteInt or WriteDec
-;			   2. Uses Main to propmpt the user for 10 integers, displays list of 10 integers, displays sum, and displays average. 
-;			   Note: This is an exercise in creating our own ReadInt and WriteInt procedures. 
+;			      b. WriteVal: converts the user's coverted SDWORD and converts it back into a string without WriteInt or WriteDec
+;	       2. Uses Main to propmpt the user for 10 integers, displays list of 10 integers, displays sum, and displays average. 
+;	       Note: This is an exercise in creating our own ReadInt and WriteInt procedures. 
 
 INCLUDE Irvine32.inc
 
