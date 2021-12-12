@@ -147,9 +147,9 @@ spacer			byte		", ",0
 running_sum		sdword		0										; used to store running sum
 nums_collected	sdword		10 DUP(0)								; collected users entered number into array
 
-; This is the farewell text
+; This is the farewell text. Thank you! 
 farewell		byte		13,10,13,10,"---------------------END OF PROGRAM-----------------------------",13,10,13,10,
-										" Thank you professors, TA's, and especially you, grader.", 13,10,13,10,
+										" Thank you and goodbye.", 13,10,13,10,
 										"----------------------------------------------------------------",13,10,0
 							
 
@@ -284,7 +284,7 @@ ReadVal PROC
 	mov			eax, [ebp+8]
 	cmp			eax, 0								; if does not enter value and just hits enter
 	jz			_error								
-	cmp			eax, 15								; if user enters more than 15 characters, this is just a pre check. An overflow check is also in place in the conversion loop
+	cmp			eax, 11								; if user enters more than 15 characters, this is just a pre check. An overflow check is also in place in the conversion loop
 	ja			_error								
 
 	; These next two checks check for the first value of the array for sign. 
