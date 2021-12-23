@@ -34,7 +34,7 @@ Write a test program (in main) which uses the ReadVal and WriteVal procedures ab
 **Program Requirements:**
 
 1. **ReadInt, ReadDec, WriteInt, and WriteDec are not allowed!**
-Essentially, the program reads the user input and converts from ASCII to numeric digit--ensuring tha tthe character is valid. 
+Essentially, the program reads the user input and converts from ASCII to numeric digit--ensuring that the character is valid. 
 2. Converting uses string primitives LODSB and STOSB operators for dealing with tstrings.
 3. All procedures parameters are passed on the runtime stack using STDCall calling conventions. 
 4. REgisters are saved and restored by the called procedures and macros.
